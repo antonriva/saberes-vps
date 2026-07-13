@@ -163,10 +163,21 @@ que no se pierdan si alguien las vuelve a tocar:
   que `nginx/canvas.conf` siga usando `$http_host` (no `$host`) — ver nota
   arriba.
 - **`Permission denied` dentro del contenedor al leer/escribir en
-  `/usr/src/app`**: síntoma de SELinux enforcing sin relabeling. Confirma
-  que los volumes en `docker-compose.yml` tengan el sufijo `:z` (ya
-  aplicado). Si persiste: `sudo setenforce 0` para descartar SELinux como
-  causa (no dejar así en producción — es solo para diagnosticar).
+  `/usr/src/app`** (p. ej. `bundle install` no puede escribir
+  `Gemfile.lock`, o Rails no puede crear archivos en `log/`/`tmp/`): la
+  causa más común es **UID mismatch**, no SELinux — confirma que hiciste
+  build con `USER_ID=$(id -u)` (ver nota arriba; `setup.sh` ya lo hace
+  solo). No lo arregles con `chmod 666`/`chmod -R 777` — es un parche que
+  hay que repetir cada vez y deja los archivos escribibles por cualquiera;
+  el build arg lo resuelve de raíz y de forma permanente. Si después de
+  rebuildear con `USER_ID` correcto sigue fallando, ahí sí puede ser
+  SELinux — confirma que los volumes tengan el sufijo `:z` (ya aplicado), o
+  descarta con `sudo setenforce 0` temporalmente para diagnosticar.
+- **`web` en crash-loop con `A server is already running (pid: 1, file:
+  /usr/src/app/tmp/pids/server.pid)`**: quedó un `server.pid` viejo de un
+  contenedor anterior que no se apagó limpio (`docker kill`, OOM, etc.).
+  `rm -f canvas-lms/tmp/pids/server.pid` y reinicia — `setup.sh` ya lo hace
+  automáticamente antes del `up -d` final.
 - **`jobs` en crash-loop**: casi siempre es un `config/*.yml` faltante o mal
   generado. `docker compose logs jobs` te va a decir exactamente qué
   archivo no encontró o qué clave rechazó.
