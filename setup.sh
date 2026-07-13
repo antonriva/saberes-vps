@@ -19,6 +19,13 @@ set -a
 source .env
 set +a
 
+# El contenedor escribe en canvas-lms/ (bind mount) como el usuario "docker"
+# (UID 9999 por defecto en la imagen). Si no coincide con el dueño real de
+# los archivos (el usuario que hizo git clone), Rails/Bundler no pueden
+# escribir Gemfile.lock, log/, tmp/, etc. Pasamos nuestro propio UID como
+# build arg para que el Dockerfile remapee el usuario interno y coincida.
+export USER_ID="$(id -u)"
+
 echo "--> Inicializando submódulo canvas-lms..."
 git submodule update --init --recursive
 
@@ -28,6 +35,9 @@ for tmpl in canvas-config/*.tmpl; do
   out="canvas-lms/config/$(basename "${tmpl%.tmpl}")"
   envsubst < "$tmpl" > "$out"
 done
+
+echo "--> Creando directorios que Rails necesita en runtime (log/tmp)..."
+mkdir -p canvas-lms/log canvas-lms/tmp/cache canvas-lms/tmp/pids canvas-lms/tmp/sockets
 
 echo "--> Build de la imagen (Ruby/Node/Yarn quedan dentro del contenedor, no en el host)..."
 docker compose build
