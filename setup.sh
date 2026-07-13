@@ -60,6 +60,9 @@ echo "--> Creando base de datos y cuenta admin..."
 docker compose run --rm web bundle exec rake db:create db:initial_setup
 
 echo "--> Levantando el stack completo..."
+# Por si quedó un tmp/pids/server.pid de una corrida anterior (container
+# matado sin apagado limpio): Rails se niega a arrancar si lo ve.
+rm -f canvas-lms/tmp/pids/server.pid
 docker compose up -d
 
 echo ""

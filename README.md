@@ -131,6 +131,16 @@ que no se pierdan si alguien las vuelve a tocar:
   relabela el directorio del host para que el contenedor pueda leer/escribir
   ahí bajo SELinux enforcing (default en Rocky Linux real). Es un no-op
   inofensivo si SELinux está deshabilitado.
+- **`build.args.USER_ID`** en `web`/`jobs`: el usuario interno del
+  contenedor (`docker`) tiene UID `9999` por defecto, distinto al UID del
+  usuario que hizo `git clone` en el host. Como `canvas-lms/` está montado
+  como bind mount, sin esto el contenedor no puede escribir `Gemfile.lock`,
+  `log/`, `tmp/`, etc. (permission denied), aunque el `.gitignore` de
+  canvas-lms nunca lo va a mostrar como "sucio". `setup.sh` ya pasa
+  `USER_ID=$(id -u)` automáticamente; el Dockerfile remapea el usuario
+  `docker` a ese UID en build time. Si reconstruyes la imagen a mano, hazlo
+  con `USER_ID=$(id -u) docker compose build` — sin eso vuelve al UID 9999
+  por defecto.
 
 ## Troubleshooting
 
