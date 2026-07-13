@@ -39,6 +39,21 @@ Edita `.env`:
 
 `.env` no se commitea — cada servidor tiene el suyo.
 
+## Abrir el puerto (firewalld)
+
+Rocky Linux trae `firewalld` activo por default en instalaciones normales
+(a diferencia de un entorno WSL2, donde normalmente no corre). Si tu server
+tiene `firewalld` activo, abre el puerto que pusiste en `HOST_PORT`:
+
+```bash
+sudo firewall-cmd --permanent --add-port=$(grep HOST_PORT .env | cut -d= -f2)/tcp
+sudo firewall-cmd --reload
+```
+
+(Si estás desplegando dentro de WSL2 en vez de un Rocky "de verdad", el
+bloqueo típico no es `firewalld` sino el **Firewall de Windows** del lado del
+host — ver la sección de Troubleshooting.)
+
 ## Levantar todo
 
 ```bash
@@ -112,3 +127,36 @@ que no se pierdan si alguien las vuelve a tocar:
   el contenedor no tiene ruta IPv6, pero varios hosts (registry de yarn,
   etc.) devuelven direcciones IPv6 primero, causando `ENETUNREACH` en bucle
   sin esto.
+- **`./canvas-lms:/usr/src/app:z`** en los bind mounts: el sufijo `:z`
+  relabela el directorio del host para que el contenedor pueda leer/escribir
+  ahí bajo SELinux enforcing (default en Rocky Linux real). Es un no-op
+  inofensivo si SELinux está deshabilitado.
+
+## Troubleshooting
+
+- **No carga nada en el puerto (`ERR_CONNECTION_REFUSED` o timeout) en un
+  Rocky Linux real**: revisa `firewalld` (ver sección de arriba). Confirma
+  primero que responde *dentro* del servidor (`curl -I
+  http://localhost:$HOST_PORT/`) antes de sospechar de Docker — si eso ya
+  da `302`, el problema es de firewall/red, no de la app.
+- **Estás desplegando dentro de WSL2 (Rocky Linux corriendo en Windows) y no
+  carga desde el navegador de Windows aunque `curl` adentro de WSL sí
+  responda**: eso no es `firewalld`, es el **Firewall de Windows**
+  bloqueando la interfaz de red de WSL (típico si WSL está en modo de red
+  "mirrored"). Se abre desde una PowerShell **de administrador** en Windows:
+  ```powershell
+  New-NetFirewallRule -DisplayName "Canvas WSL $HOST_PORT" -Direction Inbound -LocalPort $HOST_PORT -Protocol TCP -Action Allow
+  ```
+- **Los redirects de Canvas van al puerto equivocado (te manda a
+  `http://localhost/login` sin puerto)**: revisa que `CANVAS_DOMAIN`/
+  `HOST_PORT` en `.env` coincidan con por dónde estás entrando de verdad, y
+  que `nginx/canvas.conf` siga usando `$http_host` (no `$host`) — ver nota
+  arriba.
+- **`Permission denied` dentro del contenedor al leer/escribir en
+  `/usr/src/app`**: síntoma de SELinux enforcing sin relabeling. Confirma
+  que los volumes en `docker-compose.yml` tengan el sufijo `:z` (ya
+  aplicado). Si persiste: `sudo setenforce 0` para descartar SELinux como
+  causa (no dejar así en producción — es solo para diagnosticar).
+- **`jobs` en crash-loop**: casi siempre es un `config/*.yml` faltante o mal
+  generado. `docker compose logs jobs` te va a decir exactamente qué
+  archivo no encontró o qué clave rechazó.
