@@ -173,6 +173,27 @@ que no se pierdan si alguien las vuelve a tocar:
   rebuildear con `USER_ID` correcto sigue fallando, ahí sí puede ser
   SELinux — confirma que los volumes tengan el sufijo `:z` (ya aplicado), o
   descarta con `sudo setenforce 0` temporalmente para diagnosticar.
+- **`Permission denied` en algo dentro de `/home/docker/.gem/...`
+  (ej. `.../bin/crystalball.lock`), no en `/usr/src/app`**: distinto del
+  punto anterior — este es un **volumen nombrado** (`canvas_gems`,
+  `canvas_bundle`, `canvas_yarn_cache`, `canvas_node_modules`,
+  `canvas_packs`), no el bind mount. Pasa cuando un intento anterior falló
+  a medias con un `USER_ID` distinto (o sin él) y dejó archivos ahí dueños
+  de un UID viejo; como los volúmenes persisten entre intentos a propósito
+  (para no reinstalar todo cada vez), ese resto queda bloqueando al UID
+  nuevo. `setup.sh` ya normaliza el dueño de estos volúmenes como `root`
+  antes de instalar en cada corrida, así que no debería repetirse — si
+  corriste los pasos a mano sin pasar por `setup.sh`, hazlo tú mismo:
+  ```bash
+  docker compose run --rm -u root web bash -lc "
+  mkdir -p /home/docker/.gem /home/docker/.bundle /home/docker/.cache/yarn /usr/src/app/node_modules /usr/src/app/public/packs
+  chown -R docker:docker /home/docker/.gem /home/docker/.bundle /home/docker/.cache/yarn /usr/src/app/node_modules /usr/src/app/public/packs
+  "
+  ```
+  Si eso tampoco alcanza, la opción nuclear es borrar esos volúmenes
+  (`docker compose down` + `docker volume rm <proyecto>_canvas_gems ...`) y
+  dejar que `setup.sh` los recree limpios — no se pierde nada importante,
+  son solo cachés de gemas/paquetes.
 - **`web` en crash-loop con `A server is already running (pid: 1, file:
   /usr/src/app/tmp/pids/server.pid)`**: quedó un `server.pid` viejo de un
   contenedor anterior que no se apagó limpio (`docker kill`, OOM, etc.).

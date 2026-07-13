@@ -29,6 +29,23 @@ export USER_ID="$(id -u)"
 echo "--> Inicializando submódulo canvas-lms..."
 git submodule update --init --recursive
 
+# En un submódulo recién clonado, canvas-lms/.git es un ARCHIVO puntero
+# ("gitdir: ../.git/modules/canvas-lms") hacia la metadata real, que vive
+# en el repo padre — fuera de lo que montamos en el contenedor (solo
+# ./canvas-lms). Sin esto, cualquier `git` corrido dentro del contenedor
+# (yarn resolviendo dependencias por git, como graphael) falla con "not a
+# git repository", porque el puntero no resuelve a nada dentro del
+# contenedor. Lo embebemos manualmente DENTRO de canvas-lms/ para que el
+# bind mount traiga un repo git autocontenido y funcional.
+if [ -f canvas-lms/.git ]; then
+  echo "--> Embebiendo el .git del submódulo dentro de canvas-lms/ (para que el bind mount sea autocontenido)..."
+  git_dir_rel="$(sed -n 's/^gitdir: //p' canvas-lms/.git)"
+  git_dir_abs="$(cd canvas-lms && cd "$git_dir_rel" && pwd)"
+  rm canvas-lms/.git
+  mv "$git_dir_abs" canvas-lms/.git
+  sed -i '/^\s*worktree = /d' canvas-lms/.git/config
+fi
+
 echo "--> Generando config/*.yml de canvas-lms a partir de canvas-config/*.tmpl..."
 mkdir -p canvas-lms/config
 for tmpl in canvas-config/*.tmpl; do
@@ -44,6 +61,19 @@ docker compose build
 
 echo "--> Levantando postgres y redis..."
 docker compose up -d postgres redis
+
+# Si un intento anterior falló a medias (antes de que USER_ID quedara bien
+# aplicado, o con una imagen vieja), los volúmenes nombrados (canvas_gems,
+# canvas_bundle, canvas_yarn_cache, canvas_node_modules, canvas_packs)
+# pueden tener archivos con el UID viejo (9999) mezclados con el nuevo.
+# Normalizamos el dueño como root antes de instalar, para que esto sea
+# idempotente sin importar el historial de intentos previos. mkdir -p
+# primero por si algún path aún no existe como directorio.
+echo "--> Normalizando permisos en volúmenes persistentes..."
+docker compose run --rm -u root web bash -lc "
+mkdir -p /home/docker/.gem /home/docker/.bundle /home/docker/.cache/yarn /usr/src/app/node_modules /usr/src/app/public/packs
+chown -R docker:docker /home/docker/.gem /home/docker/.bundle /home/docker/.cache/yarn /usr/src/app/node_modules /usr/src/app/public/packs
+"
 
 echo "--> Instalando gemas, dependencias JS y compilando assets (puede tardar varios minutos)..."
 docker compose run --rm web bash -lc "
