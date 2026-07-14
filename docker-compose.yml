@@ -67,6 +67,7 @@ services:
     image: instructure/canvas-rce-api
     environment:
       PORT: 3001
+      ECOSYSTEM_KEY: ${RCE_ECOSYSTEM_KEY}
     restart: unless-stopped
 
   postgres:
