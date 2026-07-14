@@ -70,6 +70,7 @@ services:
       ECOSYSTEM_KEY: ${RCE_ECOSYSTEM_KEY}
       ECOSYSTEM_SECRET: ${RCE_ECOSYSTEM_SECRET}
       STATSD_HOST: ${STATSD_HOST:-localhost}
+      STATSD_PORT: ${STATSD_PORT:-8125}
     restart: unless-stopped
 
   postgres:
