@@ -69,6 +69,7 @@ services:
       PORT: 3001
       ECOSYSTEM_KEY: ${RCE_ECOSYSTEM_KEY}
       ECOSYSTEM_SECRET: ${RCE_ECOSYSTEM_SECRET}
+      STATSD_HOST: ${STATSD_HOST:-localhost}
     restart: unless-stopped
 
   postgres:
