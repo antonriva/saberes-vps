@@ -90,11 +90,12 @@ development:
           - active_record
         read_path: active_record
       live_events.yml: |-
-        aws_endpoint: http://kinesis.canvaslms.docker
-        kinesis_stream_name: live-events
-        aws_access_key_id: key
-        aws_secret_access_key_dec: secret
-        # stub_credentials: true # can be used in dev to print creds to stdout
+        # Disabled: kinesis service not in docker-compose
+        # aws_endpoint: http://kinesis.canvaslms.docker
+        # kinesis_stream_name: live-events
+        # aws_access_key_id: key
+        # aws_secret_access_key_dec: secret
+        stub_credentials: true
       kafka_events.yml: |-
         topics:
           course_events: course.events
