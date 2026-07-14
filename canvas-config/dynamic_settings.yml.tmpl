@@ -61,8 +61,8 @@ development:
         enabled_for_canvas: false
         url: 'http://127.0.0.1:9292/'
       rich-content-service:
-        # matches the "rce" service name/port defined in ../../docker-compose.yml
-        app-host: "http://rce:3001"
+        # Use nginx proxy instead of direct Docker hostname to avoid CORS issues
+        app-host: "http://${CANVAS_DOMAIN}:${HOST_PORT}/rce"
       onetrust-cookie-consent:
         domain_id: "stub-key-please-see-MRA-plugin"
         vanity_domain_id: "stub-key-please-see-MRA-plugin"
