@@ -91,9 +91,9 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "canvas"]
+      test: ["CMD", "pg_isready", "-U", "canvas", "-d", "canvas_development"]
       interval: 5s
-      timeout: 5s 
+      timeout: 5s
       retries: 10
     restart: unless-stopped
 
