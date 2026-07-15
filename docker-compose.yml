@@ -28,9 +28,6 @@ services:
       NODE_OPTIONS: --dns-result-order=ipv4first
       # Fuerza que PostgreSQL se conecte a canvas_development por defecto
       PGDATABASE: canvas_development
-      # Desactiva el sistema de sharding de Switchman para deployments de una sola instancia
-      # (Switchman intenta cargar config de shards de una BD "canvas" que no existe)
-      SKIP_FORCE_SHARDING: "1"
     volumes:
       - ./canvas-lms:/usr/src/app:z
       - canvas_node_modules:/usr/src/app/node_modules
@@ -58,8 +55,6 @@ services:
       NODE_OPTIONS: --dns-result-order=ipv4first
       # Fuerza que PostgreSQL se conecte a canvas_development por defecto
       PGDATABASE: canvas_development
-      # Desactiva el sistema de sharding de Switchman para deployments de una sola instancia
-      SKIP_FORCE_SHARDING: "1"
     volumes:
       - ./canvas-lms:/usr/src/app:z
       - canvas_node_modules:/usr/src/app/node_modules
