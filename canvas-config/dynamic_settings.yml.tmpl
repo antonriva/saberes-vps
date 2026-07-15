@@ -63,6 +63,9 @@ development:
       rich-content-service:
         # Use nginx proxy instead of direct Docker hostname to avoid CORS issues
         app-host: "http://${CANVAS_DOMAIN}:${HOST_PORT}/rce"
+        # Credentials para autenticarse con el RCE
+        key: "${RCE_ECOSYSTEM_KEY}"
+        secret: "${RCE_ECOSYSTEM_SECRET}"
       onetrust-cookie-consent:
         domain_id: "stub-key-please-see-MRA-plugin"
         vanity_domain_id: "stub-key-please-see-MRA-plugin"
