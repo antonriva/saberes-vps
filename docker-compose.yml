@@ -26,8 +26,6 @@ services:
       # El contenedor no tiene ruta IPv6 pero hosts como registry.yarnpkg.com
       # devuelven AAAA; sin esto Node intenta IPv6 primero y falla con ENETUNREACH
       NODE_OPTIONS: --dns-result-order=ipv4first
-      # Fuerza que PostgreSQL se conecte a canvas_development por defecto
-      PGDATABASE: canvas_development
     volumes:
       - ./canvas-lms:/usr/src/app:z
       - canvas_node_modules:/usr/src/app/node_modules
@@ -53,8 +51,6 @@ services:
     environment:
       RAILS_ENV: development
       NODE_OPTIONS: --dns-result-order=ipv4first
-      # Fuerza que PostgreSQL se conecte a canvas_development por defecto
-      PGDATABASE: canvas_development
     volumes:
       - ./canvas-lms:/usr/src/app:z
       - canvas_node_modules:/usr/src/app/node_modules
