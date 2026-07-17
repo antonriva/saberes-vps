@@ -1,4 +1,5 @@
 #!/bin/bash
+# Antes es necesario generar el .env local
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
