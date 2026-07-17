@@ -19,6 +19,18 @@ set -a
 source .env
 set +a
 
+# RCE_ECOSYSTEM_KEY/SECRET se usan tanto en el contenedor rce (ECOSYSTEM_KEY/
+# ECOSYSTEM_SECRET) como del lado de Canvas, vía canvas-config/vault_contents.yml.tmpl
+# (canvas_security.encryption_secret/signing_secret), para firmar/encriptar el JWT
+# que autentica al editor de contenido enriquecido con el RCE. Ambas DEBEN medir
+# exactamente 32 bytes (lo que exige AES-256-GCM); si no coinciden en longitud o
+# valor entre los dos lados, el RCE rechaza el JWT en runtime con un error críptico
+# muy alejado de la causa real. Falla temprano y con un mensaje claro en vez de eso.
+for var in RCE_ECOSYSTEM_KEY RCE_ECOSYSTEM_SECRET; do
+  len=$(printf '%s' "${!var}" | wc -c)
+  [ "$len" -eq 32 ] || { echo "'$var' debe medir exactamente 32 bytes (mide $len). Genera uno con: openssl rand -hex 16" >&2; exit 1; }
+done
+
 # El contenedor escribe en canvas-lms/ (bind mount) como el usuario "docker"
 # (UID 9999 por defecto en la imagen). Si no coincide con el dueño real de
 # los archivos (el usuario que hizo git clone), Rails/Bundler no pueden

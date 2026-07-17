@@ -131,6 +131,19 @@ que no se pierdan si alguien las vuelve a tocar:
   relabela el directorio del host para que el contenedor pueda leer/escribir
   ahí bajo SELinux enforcing (default en Rocky Linux real). Es un no-op
   inofensivo si SELinux está deshabilitado.
+- **`canvas-config/vault_contents.yml.tmpl`**: sin este archivo, Canvas no
+  tiene cómo firmar/encriptar el JWT que el editor de contenido enriquecido
+  (RCE) necesita para autenticar al usuario. `CanvasSecurity::ServicesJwt`
+  (con `symmetric: true`, ya usado tal cual en `rich_content.rb` — no hace
+  falta tocar código Ruby) lee `canvas_security.encryption_secret`/
+  `signing_secret` desde `Rails.application.credentials`, que sin un Vault
+  real corriendo se completan leyendo `config/vault_contents.yml` (ver
+  `Canvas::Vault::FileClient`). Sin ese archivo esos valores son `nil`, y
+  Canvas termina mandando el string literal `"InvalidJwtKey"` como JWT. La
+  plantilla rellena `encryption_secret`/`signing_secret` con
+  `RCE_ECOSYSTEM_KEY`/`RCE_ECOSYSTEM_SECRET` — deben ser el mismo valor que
+  el contenedor `rce` recibe como `ECOSYSTEM_KEY`/`ECOSYSTEM_SECRET`, o el
+  RCE no puede desencriptar/verificar lo que Canvas firmó.
 - **`build.args.USER_ID`** en `web`/`jobs`: el usuario interno del
   contenedor (`docker`) tiene UID `9999` por defecto, distinto al UID del
   usuario que hizo `git clone` en el host. Como `canvas-lms/` está montado
@@ -202,3 +215,15 @@ que no se pierdan si alguien las vuelve a tocar:
 - **`jobs` en crash-loop**: casi siempre es un `config/*.yml` faltante o mal
   generado. `docker compose logs jobs` te va a decir exactamente qué
   archivo no encontró o qué clave rechazó.
+- **El editor de contenido enriquecido (RCE) no carga, se queda pidiendo
+  sesión, o `docker compose logs rce` muestra `401`/`403` en
+  `/api/session`**: el JWT que Canvas le manda al RCE no es válido. Casi
+  siempre es porque falta `canvas-lms/config/vault_contents.yml` (no se
+  regeneró — corré `./setup.sh` de nuevo, o a mano: `set -a; source .env;
+  set +a; envsubst < canvas-config/vault_contents.yml.tmpl >
+  canvas-lms/config/vault_contents.yml`, y reiniciá `web`/`jobs`), o porque
+  `RCE_ECOSYSTEM_KEY`/`RCE_ECOSYSTEM_SECRET` en `.env` no coinciden en valor
+  con lo que quedó rendereado ahí (si cambiaste `.env` después del setup
+  inicial, hay que volver a renderizar y reiniciar). Ver la nota de
+  `canvas-config/vault_contents.yml.tmpl` más arriba para el detalle
+  completo.
