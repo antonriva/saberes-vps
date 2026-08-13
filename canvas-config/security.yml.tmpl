@@ -1,10 +1,7 @@
 production: &default
-  # replace this with a random string of at least 20 characters
-  encryption_key: 12345
-  # replace this with a random string of 64 characters
-  # First one is used for encryption; all are used for decryption
+  encryption_key: ${CANVAS_ENCRYPTION_KEY}
   jwt_encryption_keys:
-    - 12345
+    - ${CANVAS_JWT_KEY}
   lti_iss: 'https://canvas.instructure.com'
 
 development:

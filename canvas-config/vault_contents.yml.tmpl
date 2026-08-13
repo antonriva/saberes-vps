@@ -1,10 +1,11 @@
-# Stub local para Canvas::Vault::FileClient (no hay Vault real corriendo).
-# Provee los secretos que Canvas comparte con servicios del ecosistema.
-# canvas_security.encryption_secret/signing_secret DEBEN coincidir con
-# ECOSYSTEM_KEY/ECOSYSTEM_SECRET del contenedor rce (ver docker-compose.yml
-# y RCE_ECOSYSTEM_KEY/RCE_ECOSYSTEM_SECRET en .env), si no el RCE no puede
-# desencriptar/verificar el JWT que Canvas genera para el editor de contenido.
 development:
+  'app-canvas/data/secrets':
+    data:
+      canvas_security:
+        encryption_secret: "${RCE_ECOSYSTEM_KEY}"
+        signing_secret: "${RCE_ECOSYSTEM_SECRET}"
+
+production:
   'app-canvas/data/secrets':
     data:
       canvas_security:

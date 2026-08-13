@@ -6,3 +6,12 @@ development:
   username: canvas
   password: ${POSTGRES_PASSWORD}
   timeout: 5000
+
+production:
+  adapter: postgresql
+  encoding: utf8
+  database: canvas_development
+  host: postgres
+  username: canvas
+  password: ${POSTGRES_PASSWORD}
+  timeout: 5000
