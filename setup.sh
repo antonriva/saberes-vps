@@ -22,6 +22,12 @@ for var in RCE_ECOSYSTEM_KEY RCE_ECOSYSTEM_SECRET; do
   [ "$len" -eq 32 ] || { echo "'$var' debe medir exactamente 32 bytes (mide $len). Genera uno con: openssl rand -hex 16" >&2; exit 1; }
 done
 
+len=$(printf '%s' "$CANVAS_ENCRYPTION_KEY" | wc -c)
+[ "$len" -ge 20 ] || { echo "'CANVAS_ENCRYPTION_KEY' debe medir al menos 20 caracteres (mide $len). Genera uno con: openssl rand -hex 32" >&2; exit 1; }
+
+len=$(printf '%s' "$CANVAS_JWT_KEY" | wc -c)
+[ "$len" -eq 64 ] || { echo "'CANVAS_JWT_KEY' debe medir exactamente 64 caracteres (mide $len). Genera uno con: openssl rand -hex 32" >&2; exit 1; }
+
 export USER_ID="$(id -u)"
 
 echo "--> Inicializando submódulo canvas-lms..."
@@ -42,6 +48,9 @@ for tmpl in canvas-config/*.tmpl; do
   out="canvas-lms/config/$(basename "${tmpl%.tmpl}")"
   envsubst < "$tmpl" > "$out"
 done
+
+mkdir -p canvas-lms/config/initializers
+cp canvas-config/local_overrides.rb canvas-lms/config/initializers/local_overrides.rb
 
 echo "--> Creando directorios que Rails necesita en runtime (log/tmp)..."
 mkdir -p canvas-lms/log canvas-lms/tmp/cache canvas-lms/tmp/pids canvas-lms/tmp/sockets
@@ -66,7 +75,7 @@ bundle config --global build.ffi --enable-system-libffi
 mkdir -p /home/docker/.bundle
 bundle install --jobs \$(nproc)
 yarn install || yarn install --network-concurrency 1
-bundle exec rails canvas:compile_assets_dev
+bundle exec rails canvas:compile_assets
 "
 
 echo "--> Creando base de datos y cuenta admin..."
