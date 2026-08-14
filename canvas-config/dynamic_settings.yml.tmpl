@@ -62,7 +62,7 @@ development: &default
         url: 'http://127.0.0.1:9292/'
       rich-content-service:
         # Use nginx proxy instead of direct Docker hostname to avoid CORS issues
-        app-host: "http://${CANVAS_DOMAIN}:${HOST_PORT}/rce"
+        app-host: "${CANVAS_PROTOCOL}://${CANVAS_DOMAIN}/rce"
         # Credentials para autenticarse con el RCE
         key: "${RCE_ECOSYSTEM_KEY}"
         secret: "${RCE_ECOSYSTEM_SECRET}"
