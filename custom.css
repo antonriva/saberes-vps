@@ -1,0 +1,46 @@
+#course_summaries .course_summary:nth-child(odd).span3.border.border-trbl{
+  border-top-right-radius: 30px;
+  border-bottom-left-radius: 30px;
+}
+
+#course_summaries .course_summary:nth-child(odd) h3{
+  border-top-right-radius: 30px;
+}
+
+#course_summaries .course_summary:nth-child(even).span3.border.border-trbl{
+  border-top-left-radius: 30px;
+  border-bottom-right-radius: 30px;
+}
+
+#course_summaries .course_summary:nth-child(even) h3{
+  border-top-left-radius: 30px;
+}
+
+#course_summaries .course_summary:nth-child(-n+3) h3 {
+  background-color: #e3b055 !important;
+}
+
+#course_summaries .course_summary:nth-child(n+4):nth-child(-n+6) h3 {
+  background-color: #ca8f1b !important;
+}
+
+#course_summaries .course_summary:nth-child(n+7):nth-child(-n+9) h3 {
+  background-color:  #718e58 !important;
+}
+
+.ic-Login__container::after {
+  content: "";
+  margin-top: 15px;
+  display: block;
+  aspect-ratio: 848 / 234;
+  background-image: url("https://i.imgur.com/IQqtYVD.png");
+  background-size: contain;
+}
+
+body.ic-Login-Body #footer.ic-Login-footer {
+  display: none !important;
+}
+
+
+
+
